@@ -15,7 +15,7 @@ const databaseConnection = () => {
       console.log("DB connection successfully");
     })
     .catch(() => {
-      console.log("DB connection is not success");
+      console.log("DB connection is not successful");
     });
 };
 

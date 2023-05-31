@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const schema = new mongoose.Schema({
-  name: {
+  username: {
     type: String,
   },
   email: {
@@ -13,6 +13,9 @@ const schema = new mongoose.Schema({
   token: {
     type: String,
     default: "",
+  },
+  otp: {
+    type: Number,
   },
 });
 

@@ -1,14 +1,31 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const HTTP = require("../constant/response.constant");
-
+const nodemailer = require("nodemailer");
 const usermodel = require("../model/userModel");
+const { otpEmail } = require("./emailSend");
+
+var otp = Math.random();
+otp = otp * 1000000;
+otp = parseInt(otp);
 
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { username, email, password } = req.body;
+
+    let testAccount = await nodemailer.createTestAccount();
 
     const userEmail = await usermodel.findOne({ email });
+
+    const userName = await usermodel.findOne({ username });
+
+    if (userName) {
+      return res.status(HTTP.SUCCESS).send({
+        status: true,
+        code: HTTP.SUCCESS,
+        message: "Username is already taken",
+      });
+    }
 
     if (userEmail) {
       return res.status(HTTP.SUCCESS).send({
@@ -20,7 +37,15 @@ const register = async (req, res) => {
 
     if (!userEmail) {
       const passwordHash = await bcrypt.hash(password, 10);
-      const user = { ...req.body, password: passwordHash };
+
+      const user = { ...req.body, password: passwordHash, otp: otp };
+      const data = {
+        email: user.email,
+        otp: user.otp,
+      };
+
+      await otpEmail(data);
+
       await usermodel(user).save();
       return res.status(HTTP.SUCCESS).send({
         status: true,
@@ -110,10 +135,65 @@ const getUser = async (req, res) => {
   }
 };
 
+const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const userEmail = await usermodel.findOne({ email });
+
+    if (userEmail.otp == otp) {
+      return res.status(HTTP.SUCCESS).send({
+        status: true,
+        code: HTTP.SUCCESS,
+        message: "OTP verified successfully",
+      });
+    }
+
+    return res.status(HTTP.SUCCESS).send({
+      status: true,
+      code: HTTP.SUCCESS,
+      message: "Invalid OTP",
+    });
+  } catch (error) {
+    console.log("🚀 ~ verifyOTP ~ error:", error);
+  }
+};
+
+const resendOTP = async (req, res) => {
+  var otp = Math.random();
+  otp = otp * 1000000;
+  otp = parseInt(otp);
+
+  try {
+    const { email } = req.body;
+    const userEmail = await usermodel.findOne({ email });
+
+    const data = {
+      email,
+      otp,
+    };
+
+    if (userEmail) {
+      await otpEmail(data);
+      const updateOtp = await usermodel.findOneAndUpdate({
+        otp,
+      });
+      return res.status(HTTP.SUCCESS).send({
+        status: true,
+        code: HTTP.SUCCESS,
+        message: "OTP sent successfully",
+      });
+    }
+  } catch (error) {
+    console.log("🚀 ~ resendOTP ~ error:", error);
+  }
+};
+
 module.exports = {
   register,
   login,
   getUser,
+  verifyOTP,
+  resendOTP,
   //   encodeReqData,
   //   decodeResData,
 };

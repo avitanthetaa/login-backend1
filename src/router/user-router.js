@@ -8,5 +8,7 @@ const usercontroller = require("../controller/user-controller");
 router.post("/register", usercontroller.register); //register
 router.post("/login", usercontroller.login); //login
 router.get("/getUser", usercontroller.getUser); // getUser
+router.post("/verifyOTP", usercontroller.verifyOTP); // verifyOTP
+router.post("/resendOTP", usercontroller.resendOTP); // resendOTP
 
 module.exports = router;
